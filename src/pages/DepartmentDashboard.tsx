@@ -5,7 +5,7 @@ import {
   Building, Users, FileText, MessageCircle, TrendingUp, 
   Clock, CheckCircle, AlertCircle, LogOut, Eye, Send, 
   Calendar, MapPin, Filter, Download, BarChart3, 
-  PieChart, Activity, Bell, Search, Tag
+  PieChart, Activity, Bell, Search, Tag, User, Phone
 } from 'lucide-react';
 
 const DepartmentDashboard = () => {
@@ -20,14 +20,35 @@ const DepartmentDashboard = () => {
   const [currentDepartment, setCurrentDepartment] = useState('');
 
   const departments = [
-    { id: 'education', name: 'Education Department', icon: '🎓' },
-    { id: 'infrastructure', name: 'Infrastructure Department', icon: '🏗️' },
-    { id: 'health', name: 'Health Department', icon: '🏥' },
-    { id: 'legal', name: 'Legal Affairs', icon: '⚖️' },
-    { id: 'safety', name: 'Public Safety', icon: '🚨' },
-    { id: 'environment', name: 'Environment', icon: '🌱' },
-    { id: 'revenue', name: 'Revenue Department', icon: '💰' },
-    { id: 'transport', name: 'Transport', icon: '🚗' }
+    { id: 'education', name: 'Education Department', icon: '🎓', officers: [
+      { name: 'Dr. Sunitha Menon', empId: 'EDU002', phone: '9447234567' },
+      { name: 'Prof. Sunil Kumar', empId: 'EDU006', phone: '9447678901' }
+    ]},
+    { id: 'infrastructure', name: 'Infrastructure Department', icon: '🏗️', officers: [
+      { name: 'Rajesh Kumar Nair', empId: 'INF001', phone: '9447123456' }
+    ]},
+    { id: 'health', name: 'Health Department', icon: '🏥', officers: [
+      { name: 'Dr. Ajith Kumar', empId: 'HLT007', phone: '9447789012' }
+    ]},
+    { id: 'legal', name: 'Legal Affairs', icon: '⚖️', officers: [
+      { name: 'Adv. Krishnan Pillai', empId: 'REV003', phone: '9447345678' }
+    ]},
+    { id: 'safety', name: 'Public Safety', icon: '🚨', officers: [
+      { name: 'Inspector Ramesh Kumar', empId: 'SAF004', phone: '9447456789' }
+    ]},
+    { id: 'environment', name: 'Environment', icon: '🌱', officers: [
+      { name: 'Mr. Prakash Nair', empId: 'ENV008', phone: '9447890123' }
+    ]},
+    { id: 'revenue', name: 'Revenue Department', icon: '💰', officers: [
+      { name: 'Adv. Krishnan Pillai', empId: 'REV003', phone: '9447345678' }
+    ]},
+    { id: 'transport', name: 'Transport', icon: '🚗', officers: [
+      { name: 'Mr. Transport Officer', empId: 'TRP009', phone: '9447901234' }
+    ]},
+    { id: 'social-welfare', name: 'Social Welfare', icon: '🤝', officers: [
+      { name: 'Mrs. Radha Krishnan', empId: 'SW005', phone: '9447567890' },
+      { name: 'Mrs. Priya Nair', empId: 'SW009', phone: '9447901234' }
+    ]}
   ];
 
   useEffect(() => {
@@ -52,11 +73,29 @@ const DepartmentDashboard = () => {
     
     await new Promise(resolve => setTimeout(resolve, 1500));
     
+    // Get random officer from current department
+    const currentDeptInfo = departments.find(d => d.id === currentDepartment);
+    const officers = currentDeptInfo?.officers || [];
+    const randomOfficer = officers[Math.floor(Math.random() * officers.length)];
+    
+    const verificationDetails = randomOfficer ? {
+      name: randomOfficer.name,
+      empId: randomOfficer.empId,
+      phone: randomOfficer.phone,
+      department: currentDeptInfo?.name || 'Department'
+    } : {
+      name: 'Department Officer',
+      empId: 'DEPT001',
+      phone: '9447000000',
+      department: currentDeptInfo?.name || 'Department'
+    };
+    
     updateRequest(requestId, {
       status: 'responded',
       response: responseText,
       responseDate: new Date().toISOString(),
-      department: currentDepartment
+      department: currentDepartment,
+      verifiedBy: verificationDetails
     });
 
     setResponseText('');
@@ -182,6 +221,30 @@ const DepartmentDashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Department Officers */}
+        {currentDeptInfo?.officers && (
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Department Officers</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {currentDeptInfo.officers.map((officer, index) => (
+                <div key={index} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-3">
+                    <User className="h-8 w-8 text-blue-600" />
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{officer.name}</h4>
+                      <p className="text-sm text-gray-600">ID: {officer.empId}</p>
+                      <div className="flex items-center space-x-1 text-sm text-gray-600">
+                        <Phone className="h-3 w-3" />
+                        <span>{officer.phone}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -448,6 +511,29 @@ const DepartmentDashboard = () => {
                     <p className="text-xs text-green-600 mt-2">
                       Responded on: {new Date(selectedRequest.responseDate).toLocaleString()}
                     </p>
+                    {selectedRequest.verifiedBy && (
+                      <div className="mt-3 p-3 bg-green-100 rounded-lg">
+                        <h6 className="text-xs font-semibold text-green-900 mb-1">Verified By:</h6>
+                        <div className="grid grid-cols-2 gap-2 text-xs text-green-800">
+                          <div className="flex items-center space-x-1">
+                            <User className="h-3 w-3" />
+                            <span>{selectedRequest.verifiedBy.name}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Building className="h-3 w-3" />
+                            <span>ID: {selectedRequest.verifiedBy.empId}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Phone className="h-3 w-3" />
+                            <span>{selectedRequest.verifiedBy.phone}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Building className="h-3 w-3" />
+                            <span>{selectedRequest.verifiedBy.department}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

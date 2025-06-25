@@ -5,18 +5,21 @@ import {
   Users, FileText, MessageCircle, TrendingUp, 
   Clock, CheckCircle, AlertCircle, LogOut,
   Eye, Send, Calendar, MapPin, Filter, Download,
-  BarChart3, PieChart, Activity
+  BarChart3, PieChart, Activity, Star, Heart
 } from 'lucide-react';
 
 const OfficerDashboard = () => {
   const navigate = useNavigate();
-  const { requests, updateRequest } = useRequests();
+  const { requests, updateRequest, getAllFeedbacks } = useRequests();
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [responseText, setResponseText] = useState('');
   const [isResponding, setIsResponding] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('requests');
+
+  const feedbacks = getAllFeedbacks();
 
   useEffect(() => {
     // Check if officer is logged in
@@ -38,10 +41,19 @@ const OfficerDashboard = () => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
+    // Add verification details
+    const verificationDetails = {
+      name: 'Dr. Raju Narayana Swamy',
+      empId: 'IAS001',
+      phone: '+91-484-2377-001',
+      department: 'IAS Officer Office'
+    };
+    
     updateRequest(requestId, {
       status: 'responded',
       response: responseText,
-      responseDate: new Date().toISOString()
+      responseDate: new Date().toISOString(),
+      verifiedBy: verificationDetails
     });
 
     setResponseText('');
@@ -81,6 +93,21 @@ const OfficerDashboard = () => {
     return urgency;
   };
 
+  const getFeedbackStats = () => {
+    const stats = {
+      total: feedbacks.length,
+      new: feedbacks.filter(f => f.status === 'new').length,
+      reviewed: feedbacks.filter(f => f.status === 'reviewed').length,
+      byType: {
+        feedback: feedbacks.filter(f => f.type === 'feedback').length,
+        suggestion: feedbacks.filter(f => f.type === 'suggestion').length,
+        bug: feedbacks.filter(f => f.type === 'bug').length,
+        compliment: feedbacks.filter(f => f.type === 'compliment').length
+      }
+    };
+    return stats;
+  };
+
   const filteredRequests = requests.filter(request => {
     const matchesStatus = filterStatus === 'all' || request.status === filterStatus;
     const matchesCategory = filterCategory === 'all' || request.category === filterCategory;
@@ -95,6 +122,7 @@ const OfficerDashboard = () => {
   const stats = getStatusStats();
   const categoryStats = getCategoryStats();
   const urgencyStats = getUrgencyStats();
+  const feedbackStats = getFeedbackStats();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -176,277 +204,402 @@ const OfficerDashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex items-center">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Requests</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        {/* Navigation Tabs */}
+        <div className="bg-white rounded-lg shadow-sm mb-8 overflow-hidden">
+          <div className="flex border-b">
+            <button
+              onClick={() => setActiveTab('requests')}
+              className={`px-6 py-4 font-medium transition-colors ${
+                activeTab === 'requests'
+                  ? 'bg-blue-600 text-white border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <FileText className="h-4 w-4" />
+                <span>Citizen Requests</span>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex items-center">
-              <Clock className="h-8 w-8 text-yellow-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+            </button>
+            <button
+              onClick={() => setActiveTab('feedback')}
+              className={`px-6 py-4 font-medium transition-colors ${
+                activeTab === 'feedback'
+                  ? 'bg-blue-600 text-white border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <MessageCircle className="h-4 w-4" />
+                <span>Feedback & Suggestions</span>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex items-center">
-              <AlertCircle className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">In Review</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.inReview}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex items-center">
-              <MessageCircle className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Responded</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.responded}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-gray-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Closed</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.closed}</p>
-              </div>
-            </div>
+            </button>
           </div>
         </div>
 
-        {/* Analytics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Urgency Levels</h3>
-              <Activity className="h-5 w-5 text-gray-500" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">High Priority</span>
-                <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">{urgencyStats.high}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Medium Priority</span>
-                <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm">{urgencyStats.medium}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Low Priority</span>
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">{urgencyStats.low}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Top Categories</h3>
-              <PieChart className="h-5 w-5 text-gray-500" />
-            </div>
-            <div className="space-y-2">
-              {Object.entries(categoryStats).slice(0, 3).map(([category, count]) => (
-                <div key={category} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 capitalize">{category.replace('-', ' ')}</span>
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">{count}</span>
+        {activeTab === 'requests' && (
+          <>
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center">
+                  <FileText className="h-8 w-8 text-blue-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Total Requests</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Response Rate</h3>
-              <BarChart3 className="h-5 w-5 text-gray-500" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Response Rate</span>
-                <span className="text-2xl font-bold text-green-600">
-                  {stats.total > 0 ? Math.round((stats.responded / stats.total) * 100) : 0}%
-                </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-green-600 h-2 rounded-full" 
-                  style={{ width: `${stats.total > 0 ? (stats.responded / stats.total) * 100 : 0}%` }}
-                ></div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center">
+                  <Clock className="h-8 w-8 text-yellow-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Pending</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center">
+                  <AlertCircle className="h-8 w-8 text-blue-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">In Review</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.inReview}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center">
+                  <MessageCircle className="h-8 w-8 text-green-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Responded</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.responded}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center">
+                  <CheckCircle className="h-8 w-8 text-gray-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Closed</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.closed}</p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filters:</span>
+            {/* Analytics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Urgency Levels</h3>
+                  <Activity className="h-5 w-5 text-gray-500" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">High Priority</span>
+                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">{urgencyStats.high}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Medium Priority</span>
+                    <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm">{urgencyStats.medium}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Low Priority</span>
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">{urgencyStats.low}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Top Categories</h3>
+                  <PieChart className="h-5 w-5 text-gray-500" />
+                </div>
+                <div className="space-y-2">
+                  {Object.entries(categoryStats).slice(0, 3).map(([category, count]) => (
+                    <div key={category} className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 capitalize">{category.replace('-', ' ')}</span>
+                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Response Rate</h3>
+                  <BarChart3 className="h-5 w-5 text-gray-500" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Response Rate</span>
+                    <span className="text-2xl font-bold text-green-600">
+                      {stats.total > 0 ? Math.round((stats.responded / stats.total) * 100) : 0}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-600 h-2 rounded-full" 
+                      style={{ width: `${stats.total > 0 ? (stats.responded / stats.total) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="in-review">In Review</option>
-              <option value="responded">Responded</option>
-              <option value="closed">Closed</option>
-            </select>
 
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="all">All Categories</option>
-              <option value="corruption">Anti-Corruption</option>
-              <option value="infrastructure">Infrastructure</option>
-              <option value="education">Education</option>
-              <option value="healthcare">Healthcare</option>
-              <option value="land-rights">Land Rights</option>
-              <option value="development">Development</option>
-            </select>
+            {/* Filters and Search */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">Filters:</span>
+                </div>
+                
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="in-review">In Review</option>
+                  <option value="responded">Responded</option>
+                  <option value="closed">Closed</option>
+                </select>
 
-            <input
-              type="text"
-              placeholder="Search requests..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm flex-1 min-w-64"
-            />
-          </div>
-        </div>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="corruption">Anti-Corruption</option>
+                  <option value="infrastructure">Infrastructure</option>
+                  <option value="education">Education</option>
+                  <option value="healthcare">Healthcare</option>
+                  <option value="land-rights">Land Rights</option>
+                  <option value="development">Development</option>
+                </select>
 
-        {/* Requests Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Citizen Requests ({filteredRequests.length})
-            </h2>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Request Details
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Citizen Info
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Priority
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredRequests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-start space-x-3">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{request.title}</p>
-                          <p className="text-sm text-gray-500 line-clamp-2">{request.description}</p>
-                          <div className="flex items-center text-xs text-gray-400 mt-1">
-                            <MapPin className="h-3 w-3 mr-1" />
-                            {request.location}
+                <input
+                  type="text"
+                  placeholder="Search requests..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm flex-1 min-w-64"
+                />
+              </div>
+            </div>
+
+            {/* Requests Table */}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Citizen Requests ({filteredRequests.length})
+                </h2>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Request Details
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Citizen Info
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Category
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Priority
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredRequests.map((request) => (
+                      <tr key={request.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="flex items-start space-x-3">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{request.title}</p>
+                              <p className="text-sm text-gray-500 line-clamp-2">{request.description}</p>
+                              <div className="flex items-center text-xs text-gray-400 mt-1">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                {request.location}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{request.name}</p>
-                        <p className="text-sm text-gray-500">{request.email}</p>
-                        <p className="text-sm text-gray-500">{request.phone}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {request.category.replace('-', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUrgencyColor(request.urgency)}`}>
-                        {request.urgency.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <select
-                        value={request.status}
-                        onChange={(e) => handleStatusUpdate(request.id, e.target.value)}
-                        className={`text-xs font-medium rounded px-2 py-1 border-0 ${getStatusColor(request.status)}`}
-                      >
-                        <option value="pending">PENDING</option>
-                        <option value="in-review">IN REVIEW</option>
-                        <option value="responded">RESPONDED</option>
-                        <option value="closed">CLOSED</option>
-                      </select>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {new Date(request.createdAt).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => setSelectedRequest(request)}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
-                          title="View Details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        {request.status !== 'responded' && request.status !== 'closed' && (
-                          <button
-                            onClick={() => {
-                              setSelectedRequest(request);
-                              setResponseText('');
-                            }}
-                            className="text-green-600 hover:text-green-800 text-sm"
-                            title="Respond"
+                        </td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{request.name}</p>
+                            <p className="text-sm text-gray-500">{request.email}</p>
+                            <p className="text-sm text-gray-500">{request.phone}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {request.category.replace('-', ' ')}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUrgencyColor(request.urgency)}`}>
+                            {request.urgency?.toUpperCase() || 'MEDIUM'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <select
+                            value={request.status}
+                            onChange={(e) => handleStatusUpdate(request.id, e.target.value)}
+                            className={`text-xs font-medium rounded px-2 py-1 border-0 ${getStatusColor(request.status)}`}
                           >
-                            <MessageCircle className="h-4 w-4" />
-                          </button>
-                        )}
+                            <option value="pending">PENDING</option>
+                            <option value="in-review">IN REVIEW</option>
+                            <option value="responded">RESPONDED</option>
+                            <option value="closed">CLOSED</option>
+                          </select>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          <div className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {new Date(request.createdAt).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => setSelectedRequest(request)}
+                              className="text-blue-600 hover:text-blue-800 text-sm"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            {request.status !== 'responded' && request.status !== 'closed' && (
+                              <button
+                                onClick={() => {
+                                  setSelectedRequest(request);
+                                  setResponseText('');
+                                }}
+                                className="text-green-600 hover:text-green-800 text-sm"
+                                title="Respond"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'feedback' && (
+          <>
+            {/* Feedback Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center">
+                  <MessageCircle className="h-8 w-8 text-blue-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Total Feedback</p>
+                    <p className="text-2xl font-bold text-gray-900">{feedbackStats.total}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center">
+                  <Star className="h-8 w-8 text-yellow-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">New Feedback</p>
+                    <p className="text-2xl font-bold text-gray-900">{feedbackStats.new}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center">
+                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Reviewed</p>
+                    <p className="text-2xl font-bold text-gray-900">{feedbackStats.reviewed}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center">
+                  <Heart className="h-8 w-8 text-pink-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Compliments</p>
+                    <p className="text-2xl font-bold text-gray-900">{feedbackStats.byType.compliment}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Feedback List */}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Feedback & Suggestions ({feedbacks.length})
+                </h2>
+              </div>
+              
+              <div className="divide-y divide-gray-200">
+                {feedbacks.map((feedback) => (
+                  <div key={feedback.id} className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-lg font-medium text-gray-900">{feedback.name}</h3>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            feedback.type === 'compliment' ? 'bg-pink-100 text-pink-800' :
+                            feedback.type === 'suggestion' ? 'bg-blue-100 text-blue-800' :
+                            feedback.type === 'bug' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {feedback.type.toUpperCase()}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            feedback.status === 'new' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {feedback.status.toUpperCase()}
+                          </span>
+                        </div>
+                        <p className="text-gray-600 mb-2">{feedback.email}</p>
+                        <p className="text-gray-700 mb-3">{feedback.message}</p>
+                        <p className="text-sm text-gray-500">
+                          Submitted: {new Date(feedback.createdAt).toLocaleString()}
+                        </p>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Request Detail Modal */}
@@ -494,6 +647,13 @@ const OfficerDashboard = () => {
                     <p className="text-xs text-green-600 mt-2">
                       Responded on: {new Date(selectedRequest.responseDate).toLocaleString()}
                     </p>
+                    {selectedRequest.verifiedBy && (
+                      <div className="mt-3 p-2 bg-green-100 rounded">
+                        <p className="text-xs text-green-700">
+                          Verified by: {selectedRequest.verifiedBy.name} (ID: {selectedRequest.verifiedBy.empId})
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 

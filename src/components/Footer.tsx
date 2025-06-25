@@ -4,13 +4,15 @@ import {
   Facebook, Twitter, Linkedin, Youtube,
   MessageSquare, Lightbulb, FileText, Users
 } from 'lucide-react';
+import { useRequests } from '../context/RequestContext';
 
 const Footer = () => {
+  const { addFeedback } = useRequests();
   const [feedbackForm, setFeedbackForm] = useState({
     name: '',
     email: '',
     message: '',
-    type: 'feedback'
+    type: 'feedback' as 'feedback' | 'suggestion' | 'bug' | 'compliment'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -19,14 +21,16 @@ const Footer = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setSubmitted(true);
-    setFeedbackForm({ name: '', email: '', message: '', type: 'feedback' });
-    setIsSubmitting(false);
-    
-    setTimeout(() => setSubmitted(false), 3000);
+    try {
+      await addFeedback(feedbackForm);
+      setSubmitted(true);
+      setFeedbackForm({ name: '', email: '', message: '', type: 'feedback' });
+      setTimeout(() => setSubmitted(false), 3000);
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -140,6 +144,7 @@ const Footer = () => {
               <div className="bg-green-600 p-4 rounded-lg text-center">
                 <MessageSquare className="h-8 w-8 mx-auto mb-2" />
                 <p className="text-sm">Thank you for your feedback!</p>
+                <p className="text-xs mt-1">Your feedback has been saved and will be reviewed.</p>
               </div>
             ) : (
               <form onSubmit={handleFeedbackSubmit} className="space-y-4">

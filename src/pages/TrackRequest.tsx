@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRequests } from '../context/RequestContext';
-import { Search, Clock, CheckCircle, AlertCircle, MessageCircle } from 'lucide-react';
+import { Search, Clock, CheckCircle, AlertCircle, MessageCircle, User, Phone, Building } from 'lucide-react';
 
 const TrackRequest = () => {
   const { getRequestsByEmail } = useRequests();
@@ -8,6 +8,35 @@ const TrackRequest = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+
+  // 20+ sample email addresses for testing
+  const sampleEmails = [
+    'priya.sharma@email.com',
+    'rajesh.k@email.com',
+    'meera.nair@email.com',
+    'arun.menon@email.com',
+    'lakshmi.pillai@email.com',
+    'suresh.babu@email.com',
+    'anitha.krishnan@email.com',
+    'ravi.chandran@email.com',
+    'deepa.nair@email.com',
+    'vinod.kumar@email.com',
+    'sita.devi@email.com',
+    'manoj.varma@email.com',
+    'geetha.menon@email.com',
+    'ramesh.pillai@email.com',
+    'kavitha.nair@email.com',
+    'biju.thomas@email.com',
+    'suma.devi@email.com',
+    'ajay.kumar@email.com',
+    'latha.menon@email.com',
+    'krishnan.nair@email.com',
+    'arjun.nair@email.com',
+    'priya.krishnan@email.com',
+    'rajesh.kumar@email.com',
+    'meera.pillai@email.com',
+    'arun.nair@email.com'
+  ];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -55,16 +84,20 @@ const TrackRequest = () => {
     setIsSearching(false);
   };
 
+  const handleEmailClick = (emailAddress: string) => {
+    setEmail(emailAddress);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
             <Search className="h-12 w-12 text-blue-600 mx-auto mb-4" />
             <h1 className="text-4xl font-bold text-blue-900 mb-4">Track Your Requests</h1>
             <p className="text-xl text-gray-600">
-              Enter your email address to view the status of your submitted requests
+              Enter your email address to view the status of your submitted requests and responses from departments
             </p>
           </div>
 
@@ -111,7 +144,7 @@ const TrackRequest = () => {
 
           {/* Search Results */}
           {hasSearched && (
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
               <div className="bg-blue-600 text-white p-6">
                 <h2 className="text-2xl font-semibold">
                   Search Results for: {email}
@@ -141,12 +174,22 @@ const TrackRequest = () => {
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
                               {request.status.replace('-', ' ').toUpperCase()}
                             </span>
+                            {request.urgency && (
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                request.urgency === 'high' ? 'bg-red-100 text-red-800' :
+                                request.urgency === 'medium' ? 'bg-orange-100 text-orange-800' :
+                                'bg-green-100 text-green-800'
+                              }`}>
+                                {request.urgency.toUpperCase()} PRIORITY
+                              </span>
+                            )}
                           </div>
                           <p className="text-gray-600 mb-2">{request.description}</p>
                           <div className="flex items-center space-x-4 text-sm text-gray-500">
                             <span>Category: {request.category}</span>
                             <span>Location: {request.location}</span>
                             <span>Submitted: {new Date(request.createdAt).toLocaleDateString()}</span>
+                            <span>Request ID: {request.id}</span>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -164,6 +207,9 @@ const TrackRequest = () => {
                               <p className="text-xs text-gray-500">
                                 {new Date(request.createdAt).toLocaleString()}
                               </p>
+                              <p className="text-xs text-blue-600">
+                                Forwarded to: {request.department?.charAt(0).toUpperCase() + request.department?.slice(1)} Department
+                              </p>
                             </div>
                           </div>
 
@@ -172,7 +218,7 @@ const TrackRequest = () => {
                               <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                               <div>
                                 <p className="text-sm font-medium text-gray-900">Under Review</p>
-                                <p className="text-xs text-gray-500">Request being evaluated by officer's team</p>
+                                <p className="text-xs text-gray-500">Request being evaluated by department team</p>
                               </div>
                             </div>
                           )}
@@ -185,6 +231,32 @@ const TrackRequest = () => {
                                 <p className="text-xs text-gray-500 mb-2">
                                   {request.responseDate && new Date(request.responseDate).toLocaleString()}
                                 </p>
+                                
+                                {/* Verification Details */}
+                                {request.verifiedBy && (
+                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                                    <h4 className="text-sm font-semibold text-blue-900 mb-2">Verified By:</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-blue-800">
+                                      <div className="flex items-center space-x-1">
+                                        <User className="h-3 w-3" />
+                                        <span>{request.verifiedBy.name}</span>
+                                      </div>
+                                      <div className="flex items-center space-x-1">
+                                        <Building className="h-3 w-3" />
+                                        <span>Emp ID: {request.verifiedBy.empId}</span>
+                                      </div>
+                                      <div className="flex items-center space-x-1">
+                                        <Phone className="h-3 w-3" />
+                                        <span>{request.verifiedBy.phone}</span>
+                                      </div>
+                                      <div className="flex items-center space-x-1">
+                                        <Building className="h-3 w-3" />
+                                        <span>{request.verifiedBy.department}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
                                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                                   <p className="text-sm text-green-800">{request.response}</p>
                                 </div>
@@ -206,7 +278,7 @@ const TrackRequest = () => {
                       {request.status === 'in-review' && (
                         <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
                           <p className="text-sm text-blue-800">
-                            Your request is currently being reviewed by the officer's team. A response will be provided soon.
+                            Your request is currently being reviewed by the {request.department} department team. A response will be provided soon.
                           </p>
                         </div>
                       )}
@@ -219,39 +291,68 @@ const TrackRequest = () => {
 
           {/* Sample Email Addresses for Testing */}
           {!hasSearched && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
               <h3 className="text-lg font-semibold text-blue-900 mb-4">Sample Email Addresses for Testing</h3>
               <p className="text-blue-800 mb-4">
-                You can use these sample email addresses to see existing requests:
+                Click on any email address below to test the tracking system with existing requests:
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-blue-700">priya.sharma@email.com</span>
-                    <span className="text-blue-600">2 requests</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-blue-700">rajesh.k@email.com</span>
-                    <span className="text-blue-600">1 request</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-blue-700">meera.nair@email.com</span>
-                    <span className="text-blue-600">1 request</span>
-                  </div>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-blue-700">arun.menon@email.com</span>
-                    <span className="text-blue-600">1 request</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-blue-700">lakshmi.pillai@email.com</span>
-                    <span className="text-blue-600">1 request</span>
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {sampleEmails.map((emailAddress, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleEmailClick(emailAddress)}
+                    className="text-left p-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    <div className="text-blue-700 font-medium">{emailAddress}</div>
+                    <div className="text-blue-600 text-sm">Click to test</div>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                <p className="text-blue-800 text-sm">
+                  <strong>Note:</strong> These are sample email addresses with pre-loaded requests for demonstration purposes. 
+                  In a real system, you would only see requests associated with your actual email address.
+                </p>
               </div>
             </div>
           )}
+
+          {/* Help Section */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Need Help?</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Request Status Meanings:</h4>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-yellow-500" />
+                    <span><strong>Pending:</strong> Request received and in queue</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <AlertCircle className="h-4 w-4 text-blue-500" />
+                    <span><strong>In Review:</strong> Being evaluated by department</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <MessageCircle className="h-4 w-4 text-green-500" />
+                    <span><strong>Responded:</strong> Department has provided response</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-gray-500" />
+                    <span><strong>Closed:</strong> Request resolved and closed</span>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Contact Support:</h4>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p>If you can't find your request or need assistance:</p>
+                  <p>Email: support@rajunarayanaswamy.gov.in</p>
+                  <p>Phone: +91-484-2377-XXX</p>
+                  <p>Office Hours: 9:00 AM - 5:00 PM (Mon-Fri)</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
